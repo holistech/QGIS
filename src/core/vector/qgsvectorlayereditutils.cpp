@@ -321,15 +321,16 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
   // Prepare the split information settings for all features
   int operation_type = 1; // Split == 1
   QDateTime datetime = QDateTime::currentDateTimeUtc();
-  QString datetime_string = datetime.toString("yyyy.MM.dd hh:mm:ss");
   QProcessEnvironment env;
   QProcessEnvironment sysenv = env.systemEnvironment();
 
+  // Split metadata
   QString id_field = "";
   QString type_field = "";
   QString date_field = "";
   QStringList split_layers_list = QStringList();
-  
+
+  // Check the environment variables and set the field and layer names
   if (sysenv.contains("QGIS_SM_SAVE_INFO_LAYERS")) {split_layers_list = sysenv.value("QGIS_SM_SAVE_INFO_LAYERS").split(",");}
   if (sysenv.contains("QGIS_SM_PREDECESSOR_FIELD")) {id_field = sysenv.value("QGIS_SM_PREDECESSOR_FIELD");}
   if (sysenv.contains("QGIS_SM_TYPE")){type_field = sysenv.value("QGIS_SM_TYPE");}
@@ -385,12 +386,11 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
     {
       continue;
     }
-    // Check if the feature id of the splitted feature is negative, hence yet not generated. This must be avoided in case 
+    // Check if the feature id of the splitted feature is negative, hence yet not generated. This must be avoided in case
     // the metadata of the split operation should be stored in the layer.
     if (split_layers_list.contains(this->mLayer->name())) {
       if (feat.id() < 0)
       {
-        QgsLogger::critical("The layer must be saved before this feature can be splitted with metadata storage");
         return Qgis::GeometryOperationResult::UnableToStoreMetadataForSplitting;
       }
     }
@@ -401,39 +401,24 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
     topologyTestPoints.append( featureTopologyTestPoints );
     if ( splitFunctionReturn == Qgis::GeometryOperationResult::Success )
     {
-      //change this geometry
+      // change this geometry
       mLayer->changeGeometry( feat.id(), featureGeom );
 
       //insert new features
       QgsAttributeMap attributeMap = feat.attributes().toMap();
 
-      // Add split meta information to the attribute map, so that each resulting feature stores the id
-      // of its predecessor, the date and operation that was performed.
-      // The current layer must be in the layer list that was configured for split/merge informations
+      // Add split metadata information to the attribute map, so that each resulting feature stores the id
+      // of its predecessor, the datetime and operation that was performed.
+      // The current layer must be in the layer list that was configured for split/merge information
       if (split_layers_list.contains(this->mLayer->name())) {
-
-        if (id_field != "" && feat.fieldNameIndex(id_field) != -1) 
-        {
-          mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(id_field), feat.id());
-        }
-        if (type_field != "" && feat.fieldNameIndex(type_field) != -1) 
-        {
-          mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(type_field), operation_type);
-        }
-        if (date_field != "" && feat.fieldNameIndex(date_field) != -1) 
-        {
-          mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(date_field), datetime);
-        }
-
-        // Add the predecessor, operation date and operation type information
-        if (id_field != "" && feat.fieldNameIndex(id_field) != -1) {attributeMap[feat.fieldNameIndex(id_field)] = feat.id();}
-        if (type_field != "" && feat.fieldNameIndex(type_field) != -1) {attributeMap[feat.fieldNameIndex(type_field)] = operation_type;}
-        if (date_field != "" && feat.fieldNameIndex(date_field) != -1) {attributeMap[feat.fieldNameIndex(date_field)] = datetime;}
-
-        QgsLogger::debug(this->mLayer->name() + " == " + split_layers_list.join(","), 1, 2);
-        QgsLogger::debug(QString("QGIS_SM_PREDECESSOR_FIELD") + QString(" ") + id_field, 1, 2);
-        QgsLogger::debug(QString("QGIS_SM_TYPE") + QString(" ") + type_field, 1, 2);
-        QgsLogger::debug(QString("QGIS_SM_DATE_FIELD") + QString(" ") + date_field, 1, 2);
+        // Add predecessor, operation date and operation type information to the feature that was modified
+        if (id_field != "" && feat.fieldNameIndex(id_field) != -1) { mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(id_field), feat.id()); }
+        if (type_field != "" && feat.fieldNameIndex(type_field) != -1) { mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(type_field), operation_type); }
+        if (date_field != "" && feat.fieldNameIndex(date_field) != -1) { mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(date_field), datetime); }
+        // Modify the attributes for the new features, add predecessor, operation date and operation type information to the attribute map
+        if (id_field != "" && feat.fieldNameIndex(id_field) != -1) { attributeMap[feat.fieldNameIndex(id_field)] = feat.id(); }
+        if (type_field != "" && feat.fieldNameIndex(type_field) != -1) { attributeMap[feat.fieldNameIndex(type_field)] = operation_type; }
+        if (date_field != "" && feat.fieldNameIndex(date_field) != -1) { attributeMap[feat.fieldNameIndex(date_field)] = datetime; }
       }
 
       for ( const QgsGeometry &geom : std::as_const( newGeometries ) )
