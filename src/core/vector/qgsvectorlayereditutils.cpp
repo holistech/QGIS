@@ -412,7 +412,7 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
       // The current layer must be in the layer list that was configured for split/merge information
       if (split_layers_list.contains(this->mLayer->name())) {
         // Add predecessor, operation date and operation type information to the feature that was modified
-        if (id_field != "" && feat.fieldNameIndex(id_field) != -1) { mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(id_field), feat.id()); }
+        if (id_field != "" && feat.fieldNameIndex(id_field) != -1) { mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(id_field), QString::number(feat.id())); }
         if (type_field != "" && feat.fieldNameIndex(type_field) != -1) { mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(type_field), operation_type); }
         if (date_field != "" && feat.fieldNameIndex(date_field) != -1) { mLayer->changeAttributeValue(feat.id(), feat.fieldNameIndex(date_field), datetime); }
         // Modify the attributes for the new features, add predecessor, operation date and operation type information to the attribute map
