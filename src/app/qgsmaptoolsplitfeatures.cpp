@@ -166,6 +166,8 @@ void QgsMapToolSplitFeatures::cadCanvasReleaseEvent( QgsMapMouseEvent *e )
           Qgis::MessageLevel::Warning );
         break;
       case Qgis::GeometryOperationResult::UnableToStoreMetadataForSplitting:
+        // If split metadta should be stored in the layer, then all primary keys/feature ids must be
+        // generated beforehand, othrwise wrong feature ids will be stored as predecessor
         QgisApp::instance()->messageBar()->pushMessage(
           tr( "No feature split done" ),
           tr( "The layer must be saved first to add split metadata to the resulting features." ),

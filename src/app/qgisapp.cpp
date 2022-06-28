@@ -10597,7 +10597,7 @@ void QgisApp::mergeSelectedFeatures()
     }
   }
 
-  // Prepare the split information settings for all features
+  // Prepare the merge information settings for all features
   int operation_type = 2; // Merge == 2
   QDateTime datetime = QDateTime::currentDateTimeUtc();
   QProcessEnvironment env;
@@ -10613,9 +10613,9 @@ void QgisApp::mergeSelectedFeatures()
 
   // Check the environment variables and set the field and layer names
   if (sysenv.contains("QGIS_SM_SAVE_INFO_LAYERS")) {split_layers_list = sysenv.value("QGIS_SM_SAVE_INFO_LAYERS").split(",");}
-  if (sysenv.contains("QGIS_SM_PREDECESSOR_FIELD")) {id_field = sysenv.value("QGIS_SM_PREDECESSOR_FIELD");}
-  if (sysenv.contains("QGIS_SM_TYPE")){type_field = sysenv.value("QGIS_SM_TYPE");}
-  if (sysenv.contains("QGIS_SM_DATE_FIELD")){ date_field = sysenv.value("QGIS_SM_DATE_FIELD");}
+  if (sysenv.contains("QGIS_SM_PREDECESSORS_FIELD")) {id_field = sysenv.value("QGIS_SM_PREDECESSORS_FIELD");}
+  if (sysenv.contains("QGIS_SM_OPERATION_TYPE_FIELD")){type_field = sysenv.value("QGIS_SM_OPERATION_TYPE_FIELD");}
+  if (sysenv.contains("QGIS_SM_DATETIME_FIELD")){ date_field = sysenv.value("QGIS_SM_DATETIME_FIELD");}
 
   // Check if the feature id of the original features is negative, hence yet not generated. This must be avoided in case
   // the metadata of the merge operation should be stored in the layer.
@@ -10668,8 +10668,6 @@ void QgisApp::mergeSelectedFeatures()
   // The current layer must be in the layer list that was configured for split/merge information
   if (split_layers_list.contains(activeMapLayer->name()))
   {
-    // Add predecessor, operation date and operation type information to the feature that was modified
-    // Modify the attributes for the new features, add predecessor, operation date and operation type information to the attribute map
     if (id_field != "" && featureList[0].fieldNameIndex(id_field) != -1) { newAttributes[featureList[0].fieldNameIndex(id_field)] = id_string_list.join(","); }
     if (type_field != "" && featureList[0].fieldNameIndex(type_field) != -1) { newAttributes[featureList[0].fieldNameIndex(type_field)] = operation_type; }
     if (date_field != "" && featureList[0].fieldNameIndex(date_field) != -1) { newAttributes[featureList[0].fieldNameIndex(date_field)] = datetime; }

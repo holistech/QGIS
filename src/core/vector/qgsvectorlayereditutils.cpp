@@ -332,9 +332,9 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
 
   // Check the environment variables and set the field and layer names
   if (sysenv.contains("QGIS_SM_SAVE_INFO_LAYERS")) {split_layers_list = sysenv.value("QGIS_SM_SAVE_INFO_LAYERS").split(",");}
-  if (sysenv.contains("QGIS_SM_PREDECESSOR_FIELD")) {id_field = sysenv.value("QGIS_SM_PREDECESSOR_FIELD");}
-  if (sysenv.contains("QGIS_SM_TYPE")){type_field = sysenv.value("QGIS_SM_TYPE");}
-  if (sysenv.contains("QGIS_SM_DATE_FIELD")){ date_field = sysenv.value("QGIS_SM_DATE_FIELD");}
+  if (sysenv.contains("QGIS_SM_PREDECESSORS_FIELD")) {id_field = sysenv.value("QGIS_SM_PREDECESSORS_FIELD");}
+  if (sysenv.contains("QGIS_SM_OPERATION_TYPE_FIELD")){type_field = sysenv.value("QGIS_SM_OPERATION_TYPE_FIELD");}
+  if (sysenv.contains("QGIS_SM_DATETIME_FIELD")){ date_field = sysenv.value("QGIS_SM_DATETIME_FIELD");}
 
   // deactivate preserving circular if the curve contains only straight segments to avoid transforming Polygon to CurvePolygon
   preserveCircular &= curve->hasCurvedSegments();
