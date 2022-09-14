@@ -313,6 +313,13 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
   Qgis::GeometryOperationResult splitFunctionReturn; //return code of QgsGeometry::splitGeometry
   int numberOfSplitFeatures = 0;
 
+  // Variables for QgsExpressionContext to allow the identification of a split operation for features
+  int operationType = 1; // Split == 1
+  QDateTime datetime = QDateTime::currentDateTimeUtc();
+  QgsExpressionContext evalContext = QgsExpressionContext( QgsExpressionContextUtils::globalProjectLayerScopes( mLayer ) );
+  QgsExpressionContextScope *scope = new QgsExpressionContextScope( QObject::tr( "SplitScope" ) );
+  evalContext.appendScope( scope );
+
   QgsFeatureIterator features;
   const QgsFeatureIds selectedIds = mLayer->selectedFeatureIds();
 
@@ -401,20 +408,19 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
 
     if ( !featuresDataToAdd.isEmpty() )
     {
-      // We need to create the features at this position, so that the expression context contains the correct
-      // predecessor id that can be received in a QgsExpression named sm_predecessor_ids.
-      // The operation type can be received a the variable sm_operation_type: 1 is for split, 2 is for merge
       // Create and add all bits of geometries cut off the original geometry
       // (this is much faster than creating features one by one)
-      QgsExpressionContext *evalContext = new QgsExpressionContext( QgsExpressionContextUtils::globalProjectLayerScopes( mLayer ) );
-      evalContext->lastScope()->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "sm_predecessor_ids" ), 
-                                             QVariant(feat.id()).toString(), true ) );
-      evalContext->lastScope()->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "sm_operation_type" ), 1, true ) );
+      // We need to create the features at this position, so that the expression context contains the correct
+      // predecessor id that can be received in a QgsExpression named sm_predecessor_ids.
+      // The operation type can be received using the variable sm_operation_type: 1 is for split, 2 is for merge
+      scope->setVariable( QStringLiteral( "sm_predecessor_ids" ), QString::number( feat.id() ), true );
+      scope->setVariable( QStringLiteral( "sm_operation_type" ), operationType, true );
+      scope->setVariable( QStringLiteral( "sm_operation_date" ), datetime, true );
 
-      QgsFeatureList featuresListToAdd = QgsVectorLayerUtils::createFeatures( mLayer, featuresDataToAdd, evalContext);
+      QgsFeatureList featuresListToAdd = QgsVectorLayerUtils::createFeatures( mLayer, featuresDataToAdd, &evalContext );
       mLayer->addFeatures( featuresListToAdd );
     }
-  }
+  } // end while
 
   if ( numberOfSplitFeatures == 0 )
   {
