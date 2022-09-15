@@ -14,7 +14,8 @@ __copyright__ = 'Copyright 2022, The QGIS Project'
 
 import qgis  # NOQA
 import os
-from qgis.core import QgsPointXY, QgsVectorLayer, QgsDefaultValue
+from qgis.core import QgsVectorLayer, QgsDefaultValue
+from qgis.core import QgsPointXY as QgsPointXY # To be renamed to: QgsPoint as QgsPointXY
 from qgis.testing import start_app, unittest
 from qgis.utils import spatialite_connect
 
@@ -36,7 +37,7 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
         sql = "SELECT InitSpatialMetadata()"
         cur.execute(sql)
 
-        # simple table with primary key
+        # Create a table with a single polygon geometry that has 3 fields that should store split metadata
         sql = f"CREATE TABLE test_pg (id SERIAL PRIMARY KEY, name STRING NOT NULL, predecessors STRING, " \
               f"operation_type INTEGER, operation_date TEXT)"
         cur.execute(sql)
@@ -95,7 +96,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
     def test_split_polygon_with_split_expression(self):
         """Test the splitFeature method with default value definitions"""
 
-        # print("test_split_polygon_with_split_expression")
         layer = self.create_layer()
         self.apply_default_values(layer)
         layer.startEditing()
@@ -104,9 +104,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
         assert layer.featureCount() == 2, "wrong number of features"
 
         for feature in layer.getFeatures():
-            # print(feature.id(), "predecessors", feature["predecessors"])
-            # print(feature.id(), "operation_type", feature["operation_type"])
-            # print(feature.id(), "operation_date", feature["operation_date"])
             if feature.id() == 2:
                 assert feature["predecessors"] == 1
                 assert feature["operation_type"] == 1
@@ -116,7 +113,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
         """Test the splitFeature method with default value definitions that produce negative predecessor ids
         if the layer was not saved between the splitting operations"""
 
-        # print("test_split_polygon_with_split_expression_autogen_problem")
         layer = self.create_layer()
         self.apply_default_values(layer)
         layer.startEditing()
@@ -127,9 +123,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
         assert layer.featureCount() == 7, "wrong number of features"
 
         for feature in layer.getFeatures():
-            # print(feature.id(), "predecessors", feature["predecessors"])
-            # print(feature.id(), "operation_type", feature["operation_type"])
-            # print(feature.id(), "operation_date", feature["operation_date"])
             if feature.id() == 2:
                 assert feature["predecessors"] == 1
                 assert feature["operation_type"] == 1
@@ -154,7 +147,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
     def test_multisplit_polygon_with_split_expression(self):
         """Test the splitFeature method with default value definitions and multiple split statements"""
 
-        # print("test_multisplit_polygon_with_split_expression")
         layer = self.create_layer()
         self.apply_default_values(layer)
         layer.startEditing()
@@ -173,9 +165,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
         assert layer.featureCount() == 7, "wrong number of features"
 
         for feature in layer.getFeatures():
-            # print(feature.id(), "predecessors", feature["predecessors"])
-            # print(feature.id(), "operation_type", feature["operation_type"])
-            # print(feature.id(), "operation_date", feature["operation_date"])
             if feature.id() == 1:
                 assert feature["predecessors"] is not None
                 assert feature["operation_type"] is not None
@@ -208,7 +197,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
     def test_split_polygon_without_split_expression(self):
         """Test the splitFeature method without default value definitions"""
 
-        # print("test_split_polygon_without_split_expression")
         layer = self.create_layer()
         layer.startEditing()
         assert layer.splitFeatures([QgsPointXY(-1, -1), QgsPointXY(4, 4)], 0) == 0, "Error creating a simple split"
@@ -216,9 +204,6 @@ class TestQgsVectorLayerEditUtilsSplitMetadata(unittest.TestCase):
         assert layer.featureCount() == 2, "wrong number of features"
 
         for feature in layer.getFeatures():
-            # print(feature.id(), "predecessors", feature["predecessors"])
-            # print(feature.id(), "operation_type", feature["operation_type"])
-            # print(feature.id(), "operation_date", feature["operation_date"])
             if feature.id() == 2:
                 assert feature["predecessors"] is not None
                 assert feature["operation_type"] is not None
