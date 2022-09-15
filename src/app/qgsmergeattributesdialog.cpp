@@ -301,6 +301,10 @@ QComboBox *QgsMergeAttributesDialog::createMergeComboBox( QVariant::Type columnT
 
   newComboBox->addItem( tr( "Skip Attribute" ), QStringLiteral( "skip" ) );
   newComboBox->addItem( tr( "Manual Value" ), QStringLiteral( "manual" ) );
+  // Merge metadata related items
+  newComboBox->addItem( tr( "Predecessor Ids" ), QStringLiteral( "predecessor_ids" ) );
+  newComboBox->addItem( tr( "Operation Type" ), QStringLiteral( "operation_type" ) );
+  newComboBox->addItem( tr( "Operation Date" ), QStringLiteral( "operation_date" ) );
 
   connect( newComboBox, &QComboBox::currentTextChanged,
            this, &QgsMergeAttributesDialog::comboValueChanged );
@@ -396,6 +400,26 @@ void QgsMergeAttributesDialog::refreshMergedValue( int col )
   else if ( mergeBehaviorString == QLatin1String( "manual" ) )
   {
     mergeResult = item->data( Qt::DisplayRole );
+  }
+  else if ( mergeBehaviorString == QLatin1String( "predecessor_ids" ) )
+  {
+    // Store the features ids of that merge operation
+    QStringList idStringList;
+    for ( int i = 0; i < mFeatureList.size(); ++i )
+    {
+      idStringList << FID_TO_STRING( mFeatureList[i].id() );
+    }
+    mergeResult = idStringList.join( "," );
+  }
+  else if ( mergeBehaviorString == QLatin1String( "operation_type" ) )
+  {
+    // Split has operation type 1, merge has operation type 2
+    mergeResult = 2;
+  }
+  else if ( mergeBehaviorString == QLatin1String( "operation_date" ) )
+  {
+    // Since split support the exact date of the operation, merge should too
+    mergeResult = QDateTime::currentDateTimeUtc();
   }
   else if ( mergeBehaviorString.startsWith( 'f' ) )
   {
