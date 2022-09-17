@@ -423,6 +423,7 @@ ADD_PYTHON_TEST(PyQgsActionWidgetWrapper test_qgsactionwidgetwrapper.py)
 ADD_PYTHON_TEST(PyQgsAttributeEditorAction test_qgsattributeeditoraction.py)
 ADD_PYTHON_TEST(PyQgsVectorTile test_qgsvectortile.py)
 ADD_PYTHON_TEST(PyQgsVtpk test_qgsvtpk.py)
+ADD_PYTHON_TEST(PyQgsVectorLayerEditUtilsSplit test_qgsvectorlayereditutils_split_metadata.py)
 
 if (NOT WIN32)
   ADD_PYTHON_TEST(PyQgsLogger test_qgslogger.py)

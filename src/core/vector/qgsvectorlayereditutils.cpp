@@ -27,6 +27,8 @@
 #include "qgsvectorlayer.h"
 #include "qgsgeometryoptions.h"
 #include "qgsabstractgeometry.h"
+#include "qgsexpressioncontextutils.h"
+#include "qgsexpressioncontext.h"
 
 #include <limits>
 
@@ -311,6 +313,13 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
   Qgis::GeometryOperationResult splitFunctionReturn; //return code of QgsGeometry::splitGeometry
   int numberOfSplitFeatures = 0;
 
+  // Variables for QgsExpressionContext to allow the identification of a split operation for features
+  int operationType = 1; // Split == 1
+  QDateTime datetime = QDateTime::currentDateTimeUtc();
+  QgsExpressionContext evalContext = QgsExpressionContext( QgsExpressionContextUtils::globalProjectLayerScopes( mLayer ) );
+  QgsExpressionContextScope *scope = new QgsExpressionContextScope( QObject::tr( "SplitScope" ) );
+  evalContext.appendScope( scope );
+
   QgsFeatureIterator features;
   const QgsFeatureIds selectedIds = mLayer->selectedFeatureIds();
 
@@ -355,8 +364,6 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
     features = mLayer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
   }
 
-  QgsVectorLayerUtils::QgsFeaturesDataList featuresDataToAdd;
-
   QgsFeature feat;
   while ( features.nextFeature( feat ) )
   {
@@ -364,6 +371,9 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
     {
       continue;
     }
+
+    QgsVectorLayerUtils::QgsFeaturesDataList featuresDataToAdd;
+
     QVector<QgsGeometry> newGeometries;
     QgsPointSequence featureTopologyTestPoints;
     QgsGeometry featureGeom = feat.geometry();
@@ -395,15 +405,22 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
     {
       returnCode = splitFunctionReturn;
     }
-  }
 
-  if ( !featuresDataToAdd.isEmpty() )
-  {
-    // finally create and add all bits of geometries cut off the original geometries
-    // (this is much faster than creating features one by one)
-    QgsFeatureList featuresListToAdd = QgsVectorLayerUtils::createFeatures( mLayer, featuresDataToAdd );
-    mLayer->addFeatures( featuresListToAdd );
-  }
+    if ( !featuresDataToAdd.isEmpty() )
+    {
+      // Create and add all bits of geometries cut off the original geometry
+      // (this is much faster than creating features one by one)
+      // We need to create the features at this position, so that the expression context contains the correct
+      // predecessor id that can be received in a QgsExpression named sm_predecessor_ids.
+      // The operation type can be received using the variable sm_operation_type: 1 is for split, 2 is for merge
+      scope->setVariable( QStringLiteral( "sm_predecessor_ids" ), QString::number( feat.id() ), true );
+      scope->setVariable( QStringLiteral( "sm_operation_type" ), operationType, true );
+      scope->setVariable( QStringLiteral( "sm_operation_date" ), datetime, true );
+
+      QgsFeatureList featuresListToAdd = QgsVectorLayerUtils::createFeatures( mLayer, featuresDataToAdd, &evalContext );
+      mLayer->addFeatures( featuresListToAdd );
+    }
+  } // end while
 
   if ( numberOfSplitFeatures == 0 )
   {
